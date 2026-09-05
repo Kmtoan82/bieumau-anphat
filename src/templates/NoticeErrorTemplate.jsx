@@ -41,12 +41,30 @@ export default function NoticeErrorTemplate({ data, settings }) {
         Hôm nay, ngày <span className="text-red">{recordDate.day}</span> tháng <span className="text-red">{recordDate.month}</span> năm <span className="text-red">{recordDate.year}</span>, <b>{settings?.sellerName || 'Công ty CP TM Máy Tính An Phát'}</b> xin gửi thông báo đến Quý Khách hàng như sau:
       </div>
 
-      <div style={{ marginBottom: '16px', textIndent: '20px', textAlign: 'justify' }}>
-        Ngày <span className="text-red">{oldInvoiceDate.day}</span> tháng <span className="text-red">{oldInvoiceDate.month}</span> năm <span className="text-red">{oldInvoiceDate.year}</span>, Công ty Chúng tôi đã phát hành Hóa đơn điện tử có ký hiệu <span className="text-red">{data.oldTemplateCode || '……'}</span> số: <span className="text-red">{data.oldInvoiceNumber || '……'}</span> Với địa chỉ của Công ty Quý Khách là: <span className="text-red">{data.wrongAddress || '………………………………'}</span>
+      <div style={{ marginBottom: '8px', textIndent: '20px', textAlign: 'justify' }}>
+        Ngày <span className="text-red">{oldInvoiceDate.day}</span> tháng <span className="text-red">{oldInvoiceDate.month}</span> năm <span className="text-red">{oldInvoiceDate.year}</span>, Công ty Chúng tôi đã phát hành Hóa đơn điện tử có ký hiệu <span className="text-red">{data.oldTemplateCode || '……'}</span> số: <span className="text-red">{data.oldInvoiceNumber || '……'}</span> với thông tin của Công ty Quý Khách là:
+      </div>
+      <div style={{ marginBottom: '16px', paddingLeft: '40px' }}>
+        {data.noticeErrorCompany && <div>- Tên đơn vị: <span className="text-red">{data.wrongCompanyName || '………………………………'}</span></div>}
+        {data.noticeErrorTaxCode && <div>- Mã số thuế: <span className="text-red">{data.wrongTaxCode || '………………………………'}</span></div>}
+        {data.noticeErrorAddress && <div>- Địa chỉ: <span className="text-red">{data.wrongAddress || '………………………………'}</span></div>}
+        
+        {!data.noticeErrorCompany && !data.noticeErrorTaxCode && !data.noticeErrorAddress && (
+          <div>- Địa chỉ: <span className="text-red">{data.wrongAddress || '………………………………'}</span></div>
+        )}
       </div>
  
-      <div style={{ marginBottom: '16px', textIndent: '20px', textAlign: 'justify' }}>
-        Tuy nhiên đến ngày <span className="text-red">{discoverDate.day}</span> tháng <span className="text-red">{discoverDate.month}</span> năm <span className="text-red">{discoverDate.year}</span> Chúng tôi phát hiện địa chỉ trên bị sai và địa chỉ đúng là: <span className="text-red">{data.correctAddress || '………………………………………..'}</span>
+      <div style={{ marginBottom: '8px', textIndent: '20px', textAlign: 'justify' }}>
+        Tuy nhiên đến ngày <span className="text-red">{discoverDate.day}</span> tháng <span className="text-red">{discoverDate.month}</span> năm <span className="text-red">{discoverDate.year}</span> Chúng tôi phát hiện thông tin trên bị sai và thông tin đúng là:
+      </div>
+      <div style={{ marginBottom: '16px', paddingLeft: '40px' }}>
+        {data.noticeErrorCompany && <div>- Tên đơn vị: <span className="text-red">{data.correctCompanyName || '………………………………'}</span></div>}
+        {data.noticeErrorTaxCode && <div>- Mã số thuế: <span className="text-red">{data.correctTaxCode || '………………………………'}</span></div>}
+        {data.noticeErrorAddress && <div>- Địa chỉ: <span className="text-red">{data.correctAddress || '………………………………'}</span></div>}
+        
+        {!data.noticeErrorCompany && !data.noticeErrorTaxCode && !data.noticeErrorAddress && (
+          <div>- Địa chỉ: <span className="text-red">{data.correctAddress || '………………………………'}</span></div>
+        )}
       </div>
 
       <div style={{ marginBottom: '16px', textIndent: '20px', textAlign: 'justify' }}>

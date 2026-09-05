@@ -4,6 +4,7 @@ import html2pdf from 'html2pdf.js';
 import VatAdjustmentTemplate from './templates/VatAdjustmentTemplate';
 import WrongInfoTemplate from './templates/WrongInfoTemplate';
 import NoticeErrorTemplate from './templates/NoticeErrorTemplate';
+import InvoiceTableEditor from './components/InvoiceTableEditor';
 
 const DEFAULT_SETTINGS = {
   sellerName: 'Công ty Cổ Phần Thương Mại Máy Tính An Phát',
@@ -31,13 +32,13 @@ const TEMPLATES = [
   },
   {
     id: 'wrong-info-notice',
-    name: '2. Biên bản điều chỉnh hóa đơn (sai tên / địa chỉ/ MST)',
+    name: '2. Biên bản điều chỉnh hóa đơn (sai sót)',
     desc: 'Mẫu lập hóa đơn thay thế khi có sai sót',
     steps: [
       { title: 'Thông tin chung', keys: ['recordNumber', 'orderId', 'deliveryDate', 'recordDate'] },
       { title: 'Bên mua hàng', keys: ['buyerName', 'buyerTaxCode', 'buyerAddress', 'buyerRep', 'buyerRole'] },
       { title: 'Hóa đơn cũ', keys: ['oldTemplateCode', 'oldInvoiceNumber', 'oldInvoiceDate', 'reason'] },
-      { title: 'Nội dung điều chỉnh', keys: ['wrongBuyerName', 'correctBuyerName'] },
+      { title: 'Nội dung điều chỉnh', keys: [] },
       { title: 'Hóa đơn mới', keys: ['newInvoiceDate'] }
     ]
   },
@@ -48,7 +49,7 @@ const TEMPLATES = [
     steps: [
       { title: 'Ngày lập Thông báo', keys: ['recordNumber', 'recordDate'] },
       { title: 'Hóa đơn đã xuất', keys: ['oldTemplateCode', 'oldInvoiceNumber', 'oldInvoiceDate'] },
-      { title: 'Chi tiết Địa chỉ sai sót', keys: ['wrongAddress', 'correctAddress', 'discoverDate'] }
+      { title: 'Nội dung sai sót', keys: ['wrongAddress', 'correctAddress', 'discoverDate'] }
     ]
   }
 ];
@@ -81,6 +82,11 @@ export default function App() {
     oldInvoiceNumber: '',
     oldInvoiceDate: '',
     reason: 'Sai sót thông tin',
+    
+    // Mode for template 2
+    adjustmentType: 'buyer_info', // 'buyer_info' or 'line_items'
+    
+    // For adjustmentType: 'buyer_info'
     wrongBuyerName: '',
     wrongCompanyName: '',
     wrongTaxCode: '',
@@ -89,8 +95,18 @@ export default function App() {
     correctCompanyName: '',
     correctTaxCode: '',
     correctAddress: '',
+    
+    // For adjustmentType: 'line_items'
+    oldItems: [],
+    newItems: [],
+    
     newInvoiceDate: '',
-    discoverDate: new Date().toISOString().split('T')[0]
+    discoverDate: new Date().toISOString().split('T')[0],
+    
+    // For notice error options
+    noticeErrorCompany: false,
+    noticeErrorAddress: true,
+    noticeErrorTaxCode: false
   });
 
   const handleInputChange = (e) => {
@@ -387,57 +403,149 @@ export default function App() {
 
                     {currentSteps[currentStep].title === 'Nội dung điều chỉnh' && (
                         <>
-                          <h4 style={{marginBottom: '16px', color: 'var(--danger)'}}>Thông tin CŨ (Đã ghi sai)</h4>
-                          <div className="form-group">
-                            <label>Họ và tên người mua</label>
-                            <input type="text" className="form-control" name="wrongBuyerName" value={formData.wrongBuyerName} onChange={handleInputChange} />
-                          </div>
-                          <div className="form-group">
-                            <label>Tên đơn vị</label>
-                            <input type="text" className="form-control" name="wrongCompanyName" value={formData.wrongCompanyName} onChange={handleInputChange} />
-                          </div>
-                          <div className="form-group">
-                            <label>Mã số thuế</label>
-                            <input type="text" className="form-control" name="wrongTaxCode" value={formData.wrongTaxCode} onChange={handleInputChange} />
-                          </div>
-                          <div className="form-group" style={{marginBottom: '32px'}}>
-                            <label>Địa chỉ</label>
-                            <input type="text" className="form-control" name="wrongAddress" value={formData.wrongAddress} onChange={handleInputChange} />
+                          <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '12px', fontWeight: 'bold' }}>Chọn loại sai sót cần điều chỉnh:</label>
+                            <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input type="radio" name="adjustmentType" value="buyer_info" checked={formData.adjustmentType === 'buyer_info'} onChange={handleInputChange} />
+                                Sai thông tin Khách hàng
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input type="radio" name="adjustmentType" value="line_items" checked={formData.adjustmentType === 'line_items'} onChange={handleInputChange} />
+                                Sai Hàng hóa, Dịch vụ, Số tiền
+                              </label>
+                            </div>
                           </div>
 
-                          <h4 style={{marginBottom: '16px', color: 'var(--secondary)'}}>Thông tin MỚI (Đúng chuẩn)</h4>
-                          <div className="form-group">
-                            <label>Họ và tên người mua</label>
-                            <input type="text" className="form-control" name="correctBuyerName" value={formData.correctBuyerName} onChange={handleInputChange} />
-                          </div>
-                          <div className="form-group">
-                            <label>Tên đơn vị</label>
-                            <input type="text" className="form-control" name="correctCompanyName" value={formData.correctCompanyName} onChange={handleInputChange} />
-                          </div>
-                          <div className="form-group">
-                            <label>Mã số thuế</label>
-                            <input type="text" className="form-control" name="correctTaxCode" value={formData.correctTaxCode} onChange={handleInputChange} />
-                          </div>
-                          <div className="form-group">
-                            <label>Địa chỉ</label>
-                            <input type="text" className="form-control" name="correctAddress" value={formData.correctAddress} onChange={handleInputChange} />
-                          </div>
+                          {formData.adjustmentType === 'buyer_info' ? (
+                            <>
+                              <h4 style={{marginBottom: '16px', color: 'var(--danger)'}}>Thông tin CŨ (Đã ghi sai)</h4>
+                              <div className="form-group">
+                                <label>Họ và tên người mua</label>
+                                <input type="text" className="form-control" name="wrongBuyerName" value={formData.wrongBuyerName} onChange={handleInputChange} />
+                              </div>
+                              <div className="form-group">
+                                <label>Tên đơn vị</label>
+                                <input type="text" className="form-control" name="wrongCompanyName" value={formData.wrongCompanyName} onChange={handleInputChange} />
+                              </div>
+                              <div className="form-group">
+                                <label>Mã số thuế</label>
+                                <input type="text" className="form-control" name="wrongTaxCode" value={formData.wrongTaxCode} onChange={handleInputChange} />
+                              </div>
+                              <div className="form-group" style={{marginBottom: '32px'}}>
+                                <label>Địa chỉ</label>
+                                <input type="text" className="form-control" name="wrongAddress" value={formData.wrongAddress} onChange={handleInputChange} />
+                              </div>
+
+                              <h4 style={{marginBottom: '16px', color: 'var(--secondary)'}}>Thông tin MỚI (Đúng chuẩn)</h4>
+                              <div className="form-group">
+                                <label>Họ và tên người mua</label>
+                                <input type="text" className="form-control" name="correctBuyerName" value={formData.correctBuyerName} onChange={handleInputChange} />
+                              </div>
+                              <div className="form-group">
+                                <label>Tên đơn vị</label>
+                                <input type="text" className="form-control" name="correctCompanyName" value={formData.correctCompanyName} onChange={handleInputChange} />
+                              </div>
+                              <div className="form-group">
+                                <label>Mã số thuế</label>
+                                <input type="text" className="form-control" name="correctTaxCode" value={formData.correctTaxCode} onChange={handleInputChange} />
+                              </div>
+                              <div className="form-group">
+                                <label>Địa chỉ</label>
+                                <input type="text" className="form-control" name="correctAddress" value={formData.correctAddress} onChange={handleInputChange} />
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <InvoiceTableEditor 
+                                title="1. Danh sách hàng hóa CŨ (Đã xuất sai)"
+                                items={formData.oldItems} 
+                                onChange={(newItems) => setFormData(prev => ({ ...prev, oldItems: newItems }))}
+                              />
+                              <InvoiceTableEditor 
+                                title="2. Danh sách hàng hóa MỚI (Cần điều chỉnh đúng)"
+                                items={formData.newItems}
+                                onChange={(newItems) => setFormData(prev => ({ ...prev, newItems: newItems }))}
+                                onCopyFrom={() => {
+                                  // Deep copy old items and assign new random IDs to avoid React key conflicts
+                                  const copiedItems = formData.oldItems.map(item => ({...item, id: Date.now() + Math.random()}));
+                                  setFormData(prev => ({ ...prev, newItems: copiedItems }));
+                                }}
+                              />
+                            </>
+                          )}
                         </>
                     )}
 
-                    {currentSteps[currentStep].title === 'Chi tiết Địa chỉ sai sót' && (
+                    {currentSteps[currentStep].title === 'Nội dung sai sót' && (
                         <>
+                          <div className="form-group" style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '12px', fontWeight: 'bold' }}>Loại thông tin sai sót (Chọn 1 hoặc nhiều):</label>
+                            <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={formData.noticeErrorCompany} onChange={(e) => setFormData(prev => ({...prev, noticeErrorCompany: e.target.checked}))} />
+                                Tên đơn vị
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={formData.noticeErrorAddress} onChange={(e) => setFormData(prev => ({...prev, noticeErrorAddress: e.target.checked}))} />
+                                Địa chỉ
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={formData.noticeErrorTaxCode} onChange={(e) => setFormData(prev => ({...prev, noticeErrorTaxCode: e.target.checked}))} />
+                                Mã số thuế
+                              </label>
+                            </div>
+                          </div>
+
                           <div className="form-group">
                             <label>Ngày phát hiện sai sót</label>
                             <input type="date" className="form-control" name="discoverDate" value={formData.discoverDate} onChange={handleInputChange} />
                           </div>
-                          <div className="form-group">
-                            <label>Địa chỉ Ghi SAI (trên HĐ cũ)</label>
-                            <input type="text" className="form-control" name="wrongAddress" value={formData.wrongAddress} onChange={handleInputChange} />
-                          </div>
-                          <div className="form-group">
-                            <label>Địa chỉ ĐÚNG (thực tế)</label>
-                            <input type="text" className="form-control" name="correctAddress" value={formData.correctAddress} onChange={handleInputChange} />
+
+                          <div style={{ display: 'flex', gap: '24px', marginTop: '16px' }}>
+                            <div style={{ flex: 1 }}>
+                                <h4 style={{marginBottom: '16px', color: 'var(--danger)'}}>Thông tin CŨ (Ghi sai)</h4>
+                                {formData.noticeErrorCompany && (
+                                  <div className="form-group">
+                                    <label>Tên đơn vị sai</label>
+                                    <input type="text" className="form-control" name="wrongCompanyName" value={formData.wrongCompanyName} onChange={handleInputChange} />
+                                  </div>
+                                )}
+                                {formData.noticeErrorAddress && (
+                                  <div className="form-group">
+                                    <label>Địa chỉ sai</label>
+                                    <input type="text" className="form-control" name="wrongAddress" value={formData.wrongAddress} onChange={handleInputChange} />
+                                  </div>
+                                )}
+                                {formData.noticeErrorTaxCode && (
+                                  <div className="form-group">
+                                    <label>Mã số thuế sai</label>
+                                    <input type="text" className="form-control" name="wrongTaxCode" value={formData.wrongTaxCode} onChange={handleInputChange} />
+                                  </div>
+                                )}
+                            </div>
+                            
+                            <div style={{ flex: 1 }}>
+                                <h4 style={{marginBottom: '16px', color: 'var(--secondary)'}}>Thông tin ĐÚNG (Thực tế)</h4>
+                                {formData.noticeErrorCompany && (
+                                  <div className="form-group">
+                                    <label>Tên đơn vị đúng</label>
+                                    <input type="text" className="form-control" name="correctCompanyName" value={formData.correctCompanyName} onChange={handleInputChange} />
+                                  </div>
+                                )}
+                                {formData.noticeErrorAddress && (
+                                  <div className="form-group">
+                                    <label>Địa chỉ đúng</label>
+                                    <input type="text" className="form-control" name="correctAddress" value={formData.correctAddress} onChange={handleInputChange} />
+                                  </div>
+                                )}
+                                {formData.noticeErrorTaxCode && (
+                                  <div className="form-group">
+                                    <label>Mã số thuế đúng</label>
+                                    <input type="text" className="form-control" name="correctTaxCode" value={formData.correctTaxCode} onChange={handleInputChange} />
+                                  </div>
+                                )}
+                            </div>
                           </div>
                         </>
                     )}

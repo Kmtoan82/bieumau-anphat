@@ -1,16 +1,8 @@
 import React from 'react';
-
-const formatDateVN = (dateString) => {
-  if (!dateString) return '....../....../..........';
-  const d = new Date(dateString);
-  const day = d.getDate().toString().padStart(2, '0');
-  const month = (d.getMonth() + 1).toString().padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-};
+import InvoiceTableRenderer from '../components/InvoiceTableRenderer';
 
 const getDayMonthYear = (dateString) => {
-  if (!dateString) return { day: '....', month: '....', year: '..........' };
+  if (!dateString) return { day: '....', month: '....', year: '2026' };
   const d = new Date(dateString);
   return {
     day: d.getDate().toString().padStart(2, '0'),
@@ -21,98 +13,131 @@ const getDayMonthYear = (dateString) => {
 
 export default function WrongInfoTemplate({ data, settings }) {
   const recordDate = getDayMonthYear(data.recordDate);
+  const deliveryDate = getDayMonthYear(data.deliveryDate);
+  const oldInvoiceDate = getDayMonthYear(data.oldInvoiceDate);
+  const newInvoiceDate = getDayMonthYear(data.newInvoiceDate);
+
+  const isLineItemAdjustment = data.adjustmentType === 'line_items';
 
   return (
     <div className="doc-template">
       <div className="doc-header" style={{ display: 'block', textAlign: 'center' }}>
         <h4>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
         <h4 style={{ textDecoration: 'underline' }}>Độc lập – Tự do – Hạnh phúc</h4>
+        <div style={{ marginTop: '4px' }}>------------------</div>
       </div>
 
-      <div className="doc-title" style={{ fontSize: '15pt' }}>
+      <div className="doc-title" style={{ marginTop: '24px' }}>
         BIÊN BẢN THỎA THUẬN LẬP HÓA ĐƠN ĐIỆN TỬ THAY THẾ<br/>
         CHO HÓA ĐƠN ĐIỆN TỬ CÓ SAI SÓT
-        <div style={{ fontSize: '13pt', fontWeight: 'normal', fontStyle: 'italic', marginTop: '4px' }}>
-          (Số: <span className="text-red">{data.recordNumber || '…………'}</span>)
-        </div>
+      </div>
+      <div style={{ textAlign: 'center', marginBottom: '24px' }} className="doc-italic">
+        (Số: <span className="text-red">{data.recordNumber || '…………'}</span>)
       </div>
 
-      <div style={{ textAlign: 'justify', marginBottom: '16px' }}>
-        <p>Căn cứ vào đơn mua hàng trên shopee số đơn hàng: <span className="text-red">{data.orderId || '……………'}</span> ngày giao thành công <span className="text-red">{formatDateVN(data.deliveryDate)}</span>.</p>
-        {settings?.lawsText?.split('\n').map((line, idx) => (
-          <p key={idx}>{line}</p>
-        ))}
+      <div style={{ marginBottom: '16px', textAlign: 'justify' }}>
+        <div>- Căn cứ vào đơn mua hàng trên shopee số đơn hàng: <span className="text-red">{data.orderId || '…………'}</span> ngày giao thành công <span className="text-red">{deliveryDate.day}/{deliveryDate.month}/{deliveryDate.year}</span>.</div>
+        {settings?.lawsText ? (
+           settings.lawsText.split('\n').map((line, i) => (
+             <div key={i}>- {line}</div>
+           ))
+        ) : (
+          <>
+            <div>- Căn cứ Luật Quản lý thuế ngày 13 tháng 06 năm 2019;</div>
+            <div>- Căn cứ Nghị định 123/2020/NĐ-CP ngày 19 tháng 10 năm 2020 quy định về hoá đơn, chứng từ;</div>
+          </>
+        )}
       </div>
 
-      <div style={{ marginBottom: '16px' }}>
-        <span className="doc-italic">
-          Hôm nay, ngày <span className="text-red">{recordDate.day}</span> tháng <span className="text-red">{recordDate.month}</span> năm <span className="text-red">{recordDate.year}</span> hai bên chúng tôi gồm có:
-        </span>
+      <div style={{ marginBottom: '16px', textIndent: '20px' }}>
+        Hôm nay, ngày <span className="text-red">{recordDate.day}</span> tháng <span className="text-red">{recordDate.month}</span> năm <span className="text-red">{recordDate.year}</span>. Chúng tôi gồm có:
       </div>
 
-      <div style={{ marginBottom: '16px' }}>
-        <p className="doc-bold" style={{ textDecoration: 'underline' }}>Đơn vị bán hàng: {settings?.sellerName || 'Công ty Cổ Phần Thương Mại Máy Tính An Phát'}</p>
-        <p>Mã số thuế: {settings?.sellerTaxCode || '0108940873'}</p>
-        <p>Địa chỉ: {settings?.sellerAddress || 'Tầng 5, số 49 Phố Thái Hà, Phường Đống Đa, Thành Phố Hà Nội, Việt Nam'}</p>
-        <p>Đại diện: {settings?.sellerRep || 'Nguyễn Thu Trang'}</p>
-        <p>Chức vụ: {settings?.sellerRole || 'Kế toán trưởng'}</p>
+      <div className="doc-bold" style={{ marginBottom: '8px' }}>Bên bán (Bên A): {settings?.sellerName || 'Công ty Cổ Phần Thương Mại Máy Tính An Phát'}</div>
+      <table style={{ width: '100%', marginBottom: '16px' }}>
+        <tbody>
+          <tr><td style={{ width: '120px' }}>Mã số thuế:</td><td className="doc-bold">{settings?.sellerTaxCode || '0108940873'}</td></tr>
+          <tr><td>Địa chỉ:</td><td>{settings?.sellerAddress || 'Tầng 5, số 49 Phố Thái Hà, Phường Đống Đa, Thành Phố Hà Nội, Việt Nam'}</td></tr>
+          <tr><td>Đại diện:</td><td className="doc-bold">{settings?.sellerRep || 'Nguyễn Thu Trang'}</td></tr>
+          <tr><td>Chức vụ:</td><td>{settings?.sellerRole || 'Kế toán trưởng'}</td></tr>
+        </tbody>
+      </table>
+
+      <div className="doc-bold" style={{ marginBottom: '8px' }}>Bên mua (Bên B): <span className="text-red">{data.buyerName || '...................................................'}</span></div>
+      <table style={{ width: '100%', marginBottom: '16px' }}>
+        <tbody>
+          <tr><td style={{ width: '120px' }}>Mã số thuế:</td><td className="text-red">{data.buyerTaxCode || '...................................................'}</td></tr>
+          <tr><td>Địa chỉ:</td><td className="text-red">{data.buyerAddress || '...................................................'}</td></tr>
+          <tr><td>Đại diện:</td><td className="text-red">{data.buyerRep || '...................................................'}</td></tr>
+          <tr><td>Chức vụ:</td><td className="text-red">{data.buyerRole || 'Giám đốc'}</td></tr>
+        </tbody>
+      </table>
+
+      <div style={{ marginBottom: '16px', textAlign: 'justify' }}>
+        Hai bên thống nhất lập Biên bản điều chỉnh về việc thay thế Hóa đơn điện tử có sai sót, cụ thể như sau:
+      </div>
+      <div style={{ marginBottom: '16px', textAlign: 'justify' }}>
+        1. Thay thế hóa đơn mẫu số: <span className="text-red">{data.oldTemplateCode || '1C26TBB'}</span> Số hóa đơn: <span className="text-red">{data.oldInvoiceNumber || '…………'}</span> Ngày <span className="text-red">{oldInvoiceDate.day}</span> tháng <span className="text-red">{oldInvoiceDate.month}</span> năm <span className="text-red">{oldInvoiceDate.year}</span>
+      </div>
+      <div style={{ marginBottom: '16px', textAlign: 'justify' }}>
+        2. Lý do điều chỉnh: <span className="text-red">{data.reason || 'Sai thông tin'}</span>
       </div>
 
-      <div style={{ marginBottom: '16px' }}>
-        <p className="doc-bold" style={{ textDecoration: 'underline' }}>Đơn vị mua hàng: <span className="text-red">{data.buyerName || '………………………'}</span></p>
-        <p>Mã số thuế: <span className="text-red">{data.buyerTaxCode || '……………'}</span></p>
-        <p>Địa chỉ: <span className="text-red">{data.buyerAddress || '……………………………'}</span></p>
-        <p>Đại diện: <span className="text-red">{data.buyerRep || '……………………..'}</span></p>
-        <p>Chức vụ: <span className="text-red">{data.buyerRole || '………………….'}</span></p>
+      <div style={{ marginBottom: '16px', textAlign: 'justify' }}>
+        3. Nội dung điều chỉnh: 
+      </div>
+      
+      {!isLineItemAdjustment ? (
+        // Hiển thị nội dung sửa thông tin người mua (Mặc định)
+        <>
+          <div style={{ paddingLeft: '20px', marginBottom: '8px' }} className="doc-italic">
+            <span className="doc-bold">Nội dung đã lập sai: </span> 
+          </div>
+          <table style={{ width: '100%', marginBottom: '16px', paddingLeft: '20px' }}>
+            <tbody>
+              <tr><td style={{ width: '150px' }}>Họ và tên người mua:</td><td className="text-red">{data.wrongBuyerName || '...................................................'}</td></tr>
+              <tr><td>Tên đơn vị:</td><td className="text-red">{data.wrongCompanyName || '...................................................'}</td></tr>
+              <tr><td>Mã số thuế:</td><td className="text-red">{data.wrongTaxCode || '...................................................'}</td></tr>
+              <tr><td>Địa chỉ:</td><td className="text-red">{data.wrongAddress || '...................................................'}</td></tr>
+            </tbody>
+          </table>
+
+          <div style={{ paddingLeft: '20px', marginBottom: '8px' }} className="doc-italic">
+            <span className="doc-bold">Nay điều chỉnh thành: </span> 
+          </div>
+          <table style={{ width: '100%', marginBottom: '16px', paddingLeft: '20px' }}>
+            <tbody>
+              <tr><td style={{ width: '150px' }}>Họ và tên người mua:</td><td className="text-red">{data.correctBuyerName || '...................................................'}</td></tr>
+              <tr><td>Tên đơn vị:</td><td className="text-red">{data.correctCompanyName || '...................................................'}</td></tr>
+              <tr><td>Mã số thuế:</td><td className="text-red">{data.correctTaxCode || '...................................................'}</td></tr>
+              <tr><td>Địa chỉ:</td><td className="text-red">{data.correctAddress || '...................................................'}</td></tr>
+            </tbody>
+          </table>
+        </>
+      ) : (
+        // Hiển thị 2 bảng hàng hóa (Lựa chọn mới)
+        <>
+          <InvoiceTableRenderer title="a) Nội dung đã lập sai:" items={data.oldItems} />
+          <InvoiceTableRenderer title="b) Nay điều chỉnh thành:" items={data.newItems} />
+        </>
+      )}
+
+      <div style={{ marginBottom: '16px', textAlign: 'justify' }}>
+        4. Hoá đơn thay thế mẫu số: ................ ký hiệu: ................ Số hóa đơn: ................ Ngày <span className="text-red">{newInvoiceDate.day}</span> tháng <span className="text-red">{newInvoiceDate.month}</span> năm <span className="text-red">{newInvoiceDate.year}</span>
       </div>
 
-      <div style={{ marginBottom: '16px' }}>
-        <p>Hai bên thống nhất lập hóa đơn thay thế cho hoá đơn Mẫu số <span className="text-red">{data.oldTemplateCode || '1C26THN-4696'}</span> số <span className="text-red">{data.oldInvoiceNumber || '…………'}</span> ngày <span className="text-red">{formatDateVN(data.oldInvoiceDate)}</span></p>
-        <p>Lý do thay thế: <span className="text-red">{data.reason || '…………………………..'}</span></p>
-      </div>
-
-      <div style={{ marginBottom: '16px' }}>
-        <p className="doc-bold">Cụ thể như sau:</p>
-        <p className="doc-bold">1. Nội dung đã ghi sai: tại hóa đơn Mẫu <span className="text-red" style={{fontWeight:'normal'}}>{data.oldTemplateCode || '……'}</span> số <span className="text-red" style={{fontWeight:'normal'}}>{data.oldInvoiceNumber || '………….'}</span> ngày <span className="text-red" style={{fontWeight:'normal'}}>{formatDateVN(data.oldInvoiceDate)}</span> như sau:</p>
-        <div style={{ paddingLeft: '20px' }}>
-            <p>Họ và tên người mua: <span className="text-red">{data.wrongBuyerName || '…………….'}</span></p>
-            <p>Tên đơn vị: <span className="text-red">{data.wrongCompanyName || '………………'}</span></p>
-            <p>Mã số thuế: <span className="text-red">{data.wrongTaxCode || '………………….'}</span></p>
-            <p>Địa chỉ: <span className="text-red">{data.wrongAddress || '…………………………..'}</span></p>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: '16px' }}>
-        <p className="doc-bold">2. Nội dung đúng theo thỏa thuận và thực tế mua bán:</p>
-        <div style={{ paddingLeft: '20px' }}>
-            <p>Họ và tên người mua: <span className="text-red">{data.correctBuyerName || '…………………'}</span></p>
-            <p>Tên đơn vị: <span className="text-red">{data.correctCompanyName || '………………………………'}</span></p>
-            <p>Mã số thuế: <span className="text-red">{data.correctTaxCode || '…………………………………'}</span></p>
-            <p>Địa chỉ: <span className="text-red">{data.correctAddress || '……………………………………….'}</span></p>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: '16px' }}>
-        <p className="doc-bold">3. Hai bên thống nhất như sau:</p>
-        <p style={{ textIndent: '20px' }}>
-          Bên bán sẽ xuất hóa đơn mới vào ngày <span className="text-red">{formatDateVN(data.newInvoiceDate)}</span> để thay thế cho hóa đơn sai sót Mẫu <span className="text-red">{data.oldTemplateCode || '……'}</span> số <span className="text-red">{data.oldInvoiceNumber || '…….'}</span> ngày <span className="text-red">{formatDateVN(data.oldInvoiceDate)}</span>
-        </p>
-      </div>
-
-      <div style={{ marginBottom: '16px' }}>
-        <p className="doc-italic">Biên bản được lập thành 02 (hai) bản, mỗi bên giữ 01 (một) bản, có giá trị pháp lý như nhau.</p>
+      <div style={{ marginBottom: '16px', textAlign: 'justify' }}>
+        Hai bên cam kết các thông tin khai báo trên là chính xác. Biên bản này được lập thành 02 bản, mỗi bên giữ 01 bản có giá trị pháp lý như nhau.
       </div>
 
       <div className="doc-signature-section">
-        <div className="doc-signature-box">
-           <p className="doc-bold">ĐẠI DIỆN BÊN MUA</p>
-           <p className="doc-italic">(Ký điện tử/ ký, đóng dấu, ghi rõ họ tên)</p>
-           <div style={{ height: '80px' }}></div>
+        <div>
+          <p className="doc-bold">ĐẠI DIỆN BÊN MUA</p>
+          <div style={{ height: '80px' }}></div>
         </div>
-        <div className="doc-signature-box">
-           <p className="doc-bold">ĐẠI DIỆN BÊN BÁN</p>
-           <p className="doc-italic">(Ký điện tử/ ký, đóng dấu, ghi rõ họ tên)</p>
-           <div style={{ height: '80px' }}></div>
+        <div>
+          <p className="doc-bold">ĐẠI DIỆN BÊN BÁN</p>
+          <div style={{ height: '80px' }}></div>
         </div>
       </div>
     </div>
